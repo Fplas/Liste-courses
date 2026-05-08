@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#ffffff"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta name="apple-mobile-web-app-title" content="Courses"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="icon-192.png"/>
+  <title>Liste de courses</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #fff; color: #1a1a1a; font-size: 15px; }
+    input, select, button { font-family: inherit; font-size: 14px; }
+    input, select { border: 0.5px solid #ccc; border-radius: 8px; padding: 7px 10px; background: #fff; color: #1a1a1a; outline: none; width: 100%; }
+    input:focus, select:focus { border-color: #888; }
+    button { background: transparent; border: 0.5px solid #ccc; border-radius: 8px; padding: 7px 12px; cursor: pointer; color: #1a1a1a; }
+    button:active { opacity: 0.7; }
+
+    #app { max-width: 680px; margin: 0 auto; padding: 1rem; }
+
+    .tabs { display: flex; gap: 6px; margin-bottom: 1.25rem; }
+    .tab { display: flex; align-items: center; gap: 6px; padding: 7px 16px; border-radius: 8px; border: 0.5px solid #ddd; background: transparent; color: #666; font-size: 13px; cursor: pointer; }
+    .tab.active { background: #f2f2f2; border-color: #bbb; color: #1a1a1a; font-weight: 500; }
+    .badge { background: #fee2e2; color: #b91c1c; border-radius: 99px; font-size: 11px; padding: 1px 6px; font-weight: 500; }
+
+    .toolbar { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+    .toolbar input { flex: 1; min-width: 150px; }
+    .toolbar select { min-width: 100px; width: auto; }
+    .btn-add { display: flex; align-items: center; gap: 5px; white-space: nowrap; width: auto; }
+
+    .add-form { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 8px; border: 0.5px solid #ddd; background: #f9f9f9; margin-bottom: 10px; }
+    .add-form-row { display: flex; gap: 8px; }
+    .add-form-row button { width: auto; }
+
+    .table { border: 0.5px solid #ddd; border-radius: 12px; overflow: hidden; }
+    .table-header { display: flex; padding: 7px 12px; background: #f7f7f7; border-bottom: 0.5px solid #ddd; }
+    .col-label { flex: 1; font-size: 11px; font-weight: 500; color: #888; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 4px; }
+    .table-row { display: flex; align-items: center; padding: 9px 12px; border-bottom: 0.5px solid #eee; background: #fff; gap: 8px; min-height: 42px; }
+    .table-row:last-child { border-bottom: none; }
+    .row-name { flex: 1; font-size: 13px; word-break: break-word; }
+    .row-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .row-actions button { border: none; padding: 4px 6px; font-size: 16px; color: #aaa; }
+    .btn-delete { color: #e57373 !important; }
+
+    .edit-form { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+    .edit-form input, .edit-form select { font-size: 13px; }
+    .edit-form-actions { display: flex; gap: 6px; }
+    .edit-form-actions button { width: auto; font-size: 13px; padding: 5px 10px; }
+
+    .pill-status { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 500; border: none; cursor: pointer; white-space: nowrap; }
+    .pill-status .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .pill-en-stock { background: #e6f9f0; color: #1a7a4a; }
+    .pill-en-stock .dot { background: #1a7a4a; }
+    .pill-a-restocker { background: #fef0e6; color: #b85c00; }
+    .pill-a-restocker .dot { background: #e07a00; }
+    .pill-out { background: #f0e6fe; color: #6a1a7a; }
+    .pill-out .dot { background: #6a1a7a; }
+
+    .tag-pill { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 4px; border: 0.5px solid rgba(0,0,0,0.08); color: #444; white-space: nowrap; }
+
+    .empty { text-align: center; padding: 3rem; color: #aaa; font-size: 14px; }
+    .count { font-size: 12px; color: #aaa; margin-top: 6px; padding-left: 2px; }
+
+    /* Liste */
+    .liste-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; font-size: 13px; color: #666; }
+    .liste-header strong { color: #1a1a1a; }
+    .liste-group { border: 0.5px solid #ddd; border-radius: 12px; overflow: hidden; margin-bottom: 12px; }
+    .liste-group-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #f7f7f7; border-bottom: 0.5px solid #ddd; cursor: grab; }
+    .liste-group-header-left { display: flex; align-items: center; gap: 7px; font-size: 13px; }
+    .liste-group-count { font-size: 12px; color: #aaa; }
+    .btn-checkall { font-size: 12px; width: auto; display: flex; align-items: center; gap: 4px; }
+    .liste-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 0.5px solid #eee; cursor: pointer; }
+    .liste-item:last-child { border-bottom: none; }
+    .liste-item:active { background: #f9f9f9; }
+    .checkbox { width: 18px; height: 18px; border-radius: 4px; border: 1.5px solid #bbb; flex-shrink: 0; }
+    .liste-item-name { font-size: 13px; }
+
+    .grip { color: #bbb; font-size: 18px; line-height: 1; cursor: grab; }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const STORAGE_KEY = "pantry_pwa_v1";
+const ORDER_KEY = "pantry_pwa_order_v1";
+
+const INITIAL = [
+  {id:1,name:"Adoucissant",status:"En stock",tags:["9 (Nettoyants)"]},
+  {id:2,name:"Ail",status:"En stock",tags:["16 (fruits &légumes)"]},
+  {id:3,name:"Anis étoilé",status:"En stock",tags:["2 (condiments/conserves)"]},
+  {id:4,name:"Après shampooing",status:"En stock",tags:["19 (hygiène)"]},
+  {id:5,name:"Aubergines",status:"En stock",tags:["14 (surgelés)","16 (fruits &légumes)"]},
+  {id:6,name:"Avoines ou perles",status:"En stock",tags:["4 (riz/sauces/compotes/farines/pâtes)"]},
+  {id:7,name:"Bacon",status:"En stock",tags:["15 (charcuterie)"]},
+  {id:8,name:"Barres céréales",status:"À restocker",tags:["8 (céréales/confiture)"]},
+  {id:9,name:"Beurre de cacahuète",status:"En stock",tags:["8 (céréales/confiture)"]},
+  {id:10,name:"Beurre doux",status:"En stock",tags:["11 (Yaourt/fromage)"]},
+  {id:11,name:"Beurre salé",status:"En stock",tags:["11 (Yaourt/fromage)"]},
+  {id:12,name:"Boudoirs",status:"En stock",tags:["7 (Chocolat/biscuits)"]},
+  {id:13,name:"Bouillons cubes",status:"En stock",tags:["2 (condiments/conserves)"]},
+  {id:14,name:"Briques de soupe",status:"En stock",tags:["2 (condiments/conserves)"]},
+  {id:15,name:"Burrata",status:"En stock",tags:["11 (Yaourt/fromage)"]},
+  {id:16,name:"Butternut",status:"En stock",tags:["14 (surgelés)","16 (fruits &légumes)"]},
+  {id:17,name:"Carottes",status:"En stock",tags:["16 (fruits &légumes)"]},
+  {id:18,name:"Céleri",status:"En stock",tags:["16 (fruits &légumes)"]},
+  {id:19,name:"Céréales",status:"En stock",tags:["8 (céréales/confiture)"]},
+  {id:20,name:"Champignons",status:"En stock",tags:["14 (surgelés)","16 (fruits &légumes)"]},
+  {id:21,name:"Chocolat pâtissier",status:"En stock",tags:["7 (Chocolat/biscuits)"]},
+  {id:22,name:"Chorizo",status:"En stock",tags:["11 (Yaourt/fromage)"]},
+  {id:23,name:"Citrons",status:"En stock",tags:["16 (fruits &légumes)"]},
+  {id:24,name:"Compotes",status:"En stock",tags:["16 (fruits &légumes)"]},
+  {id:25,name:"Compotes (gourdes)",status:"En stock",tags:["4 (riz/sauces/compotes/farines/pâtes)"]},
+  {id:26,name:"Concentré de tomates",status:"En stock",tags:["4 (riz/sauces/compotes/farines/pâtes)"]},
+  {id:27,name:"Coton à démaquiller",status:"En stock",tags:["19 (hygiène)"]},
+  {id:28,name:"Coton-tige",status:"En stock",tags:["19 (hygiène)"]},
+  {id:29,name:"Coulis tomate",status:"En stock",tags:["4 (riz/sauces/compotes/farines/pâtes)"]},
+  {id:30,name:"Courgettes",status:"En stock",tags:["14 (surgelés)","16 (fruits &légumes)"]},
+  {id:31,name:"Crème (conservation temp. ambiante)",status:"En stock",tags:["17 (Lait/jus de fruits)"]},
+  {id:32,name:"Crème fraîche",status:"En stock",tags:["11 (Yaourt/fromage)"]},
+  {id:33,name:"Croissants",status:"En stock",tags:["14 (surgelés)"]},
+  {id:34,name:"Dentifrice",status:"En stock",tags:["19 (hygiène)"]},
+  {id:35,name:"Déodorant",status:"En stock",tags:["19 (hygiène)"]},
+  {id:36,name:"Épinards",status:"En stock",tags:["14 (surgelés)"]},
+  {id:37,name:"Éponge",status:"En stock",tags:["9 (Nettoyants)"]},
+  {id:38,name:"Estragon",status:"En stock",tags:["2 (condiments/conserves)"]},
+  {id:39,name:"Extrait de vanille",status:"En stock",tags:["4 (riz/sauces/compotes/farines/pâtes)"]},
+  {id:40,name:"Farine",status:"En stock",tags:["4 (riz/sauces/compotes/farines/pâtes)"]},
+  {id:41,name:"Feta",status:"En stock",tags:["11 (Yaourt/fromage)"]},
+  {id:42,name:"Fil dentaire",status:"En stock",tags:["19 (hygiène)"]},
+  {id:43,name:"Fjords",status:"En stock",tags:["11 (Yaourt/fromage)"]},
+  {id:44,name:"Flocons d'avoine",status:"En stock",tags:["8 (céréales/confiture)"]},
+  {id:45,name:"Fromage de chèvre",status:"En stock",tags:["11 (Yaourt/fromage)"]},
+  {id:46,name:"Fruits secs",status:"En stock",tags:["16 (fruits &légumes)"]},
+  {id:47,name:"Fruits surgelés",status:"En stock",tags:["14 (surgelés)"]},
+  {id:48,name:"Gaspacho",status:"En stock",tags:["16 (fruits &légumes)"]},
+  {id:49,name:"Gel douche",status:"En stock",tags:["19 (hygiène)"]},
+  {id:50,name:"Glace",status:"À restocker",tags:["14 (surgelés)"]},
+  {id:51,name:"Gnocchis",status:"En stock",tags:["16 (fruits &légumes)"]},
+  {id:52,name:"Gochujang",status:"En stock",tags:[]},
+  {id:53,name:"Gruyère râpé",status:"En stock",tags:["11 (Yaourt/fromage)"]},
+  {id:54,name:"Haricots blancs",status:"En stock",tags:["2 (condiments/conserves)"]},
+  {id:55,name:"Haricots rouges",status:"En stock",tags:["2 (condiments/conserves)"]},
+  {id:56,name:"Huile d'amande douce",status:"En stock",tags:["19 (hygiène)"]},
+  {id:57,name:"Huile d'olive",status:"En stock",tags:["2 (condiments/conserves)"]},
+  {id:58,name:"Huile de coco",status:"À restocker",tags:["1 (bio)"]},
+  {id:59,name:"Huile de friture",status:"En stock",tags:["2 (condiments/conserves)"]},
+  {id:60,name:"Huile de sésame",status:"En stock",tags:["2 (condiments/conserves)"]},
+  {id:61,name:"Huile neutre (colza)",status:"En stock",tags:["2 (condiments/conserves)"]},
+  {id:62,name:"Jus d'ananas",status:"En stock",tags:["17 (Lait/jus de fruits)"]},
+  {id:63,name:"Jus d'orange",status:"En stock",tags:["17 (Lait/jus de fruits)"]},
+  {id:64,name:"Jus de citron",status:"En stock",tags:["2 (condiments/conserves)"]},
+  {id:65,name:"Jus de pomme",status:"Out of stock",tags:["17 (Lait/jus de fruits)"]},
+  {id:66,name:"Ketchup",status:"En stock",tags:["2 (condiments/conserves)"]},
+  {id:67,name:"Lait",status:"En stock",tags:["17 (Lait/jus de fruits)"]},
+  {id:68,name:"Lait de coco",status:"En stock",tags:["2 (condiments/conserves)"]},
+  {id:69,name:"Lait pour le corps",status:"En stock",tags:["19 (hygiène)"]},
+  {id:70,name:"Lait végétal",status:"En stock",tags:["1 (bio)"]},
+  {id:71,name:"Lardons",status:"En stock",tags:["15 (charcuterie)"]},
+  {id:72,name:"Lasagne",status:"En stock",tags:["4 (riz/sauces/compotes/farines/pâtes)"]},
+  {id:73,name:"Lentilles corail",status:"En stock",tags:["4 (riz/sauces/compotes/farines/pâtes)"]},
+  {id:74,name:"Lentilles vertes",status:"En stock",tags:["4 (riz/sauces/compotes/farines/pâtes)"]},
+  {id:75,name:"Lessive",status:"En stock",tags:["9 (Nettoyants)"]},
+  {id:76,name:"Levure chimique",status:"En stock",tags:["4 (riz/sauces/compotes/farines/pâtes)"]},
+  {id:77,name:"Levure de boulanger",status:"En stock",tags:["4 (riz/sauces/compotes/farines/pâtes)"]},
+  {id:78,name:"Linguine / Spaghetti",status:"En stock",tags:["4 (riz/sauces/compotes/farines/pâtes)"]},
+  {id:79,name:"Liquide lave vaisselle",status:"En stock",tags:["9 (Nettoyants)"]},
+  {id:80,name:"Maïs conserve",status:"En stock",tags:["2 (condiments/conserves)"]},
+  {id:81,name:"Maïzena",status:"En stock",tags:["4 (riz/sauces/compotes/farines/pâtes)"]},
+  {id:82,name:"Matcha",status:"En stock",tags:[]},
+  {id:83,name:"Mirin",status:"En stock",tags:[]},
+  {id:84,name:"Miso",status:"En stock",tags:[]},
+  {id:85,name:"Mouchoirs",status:"En stock",tags:["19 (hygiène)"]},
+  {id:86,name:"Moutarde",status:"En stock",tags:["2 (condiments/conserves)"]},
+  {id:87,name:"Mozzarella",status:"En stock",tags:["11 (Yaourt/fromage)"]},
+  {id:88,name:"Noix de pécan",status:"En stock",tags:["16 (fruits &légumes)"]},
+  {id:89,name:"Nutella",status:"En stock",tags:["8 (céréales/confiture)"]},
+  {id:90,name:"Oeufs",status:"En stock",tags:["3 (viande-oeufs)"]},
+  {id:91,name:"Pain",status:"En stock",tags:["0 (pain)"]},
+  {id:92,name:"Pain au chocolat",status:"En stock",tags:["14 (surgelés)"]},
+  {id:93,name:"Papier toilette",status:"En stock",tags:["10 (poubelles/PQ/Sopalin)"]},
+  {id:94,name:"Parmesan",status:"En stock",tags:["11 (Yaourt/fromage)"]},
+  {id:95,name:"Pâte à pizza",status:"En stock",tags:["15 (charcuterie)"]},
+  {id:96,name:"Pâtes asiatiques sèches / Udon",status:"En stock",tags:["3 (viande-oeufs)"]},
+  {id:97,name:"Penne / Pipe Rigate",status:"En stock",tags:["4 (riz/sauces/compotes/farines/pâtes)"]},
+  {id:98,name:"Pesto",status:"En stock",tags:["4 (riz/sauces/compotes/farines/pâtes)"]},
+  {id:99,name:"Petits pois",status:"En stock",tags:["14 (surgelés)"]},
+  {id:100,name:"Philadelphia",status:"En stock",tags:["11 (Yaourt/fromage)"]},
+  {id:101,name:"Pièges mites alimentaires",status:"En stock",tags:["9 (Nettoyants)"]},
+  {id:102,name:"Poireaux",status:"En stock",tags:["14 (surgelés)"]},
+  {id:103,name:"Pois chiches (conserve)",status:"En stock",tags:["2 (condiments/conserves)"]},
+  {id:104,name:"Poivre en grains",status:"En stock",tags:["2 (condiments/conserves)"]},
+  {id:105,name:"Polenta",status:"En stock",tags:[]},
+  {id:106,name:"Pommes de terre",status:"En stock",tags:["16 (fruits &légumes)"]},
+  {id:107,name:"Poudre d'amandes",status:"En stock",tags:["16 (fruits &légumes)"]},
+  {id:108,name:"Poudre de noisettes",status:"En stock",tags:["16 (fruits &légumes)"]},
+  {id:109,name:"Poulet",status:"En stock",tags:["3 (viande-oeufs)"]},
+  {id:110,name:"Produit nettoyant sol",status:"En stock",tags:["9 (Nettoyants)"]},
+  {id:111,name:"Produit vaisselle",status:"En stock",tags:["9 (Nettoyants)"]},
+  {id:112,name:"Ricotta",status:"En stock",tags:["11 (Yaourt/fromage)"]},
+  {id:113,name:"Riz à Risotto",status:"En stock",tags:["4 (riz/sauces/compotes/farines/pâtes)"]},
+  {id:114,name:"Riz basmati",status:"En stock",tags:["4 (riz/sauces/compotes/farines/pâtes)"]},
+  {id:115,name:"Sacs poubelle",status:"En stock",tags:["9 (Nettoyants)"]},
+  {id:116,name:"Sauce barbecue",status:"En stock",tags:["2 (condiments/conserves)"]},
+  {id:117,name:"Sauce soja salée",status:"En stock",tags:["3 (viande-oeufs)"]},
+  {id:118,name:"Sauce soja sucrée",status:"En stock",tags:["3 (viande-oeufs)"]},
+  {id:119,name:"Saumon",status:"Out of stock",tags:["14 (surgelés)"]},
+  {id:120,name:"Saumon fumé",status:"Out of stock",tags:["15 (charcuterie)"]},
+  {id:121,name:"Savon main",status:"En stock",tags:["19 (hygiène)"]},
+  {id:122,name:"Sel",status:"En stock",tags:["2 (condiments/conserves)"]},
+  {id:123,name:"Semoule extra-fine",status:"En stock",tags:["4 (riz/sauces/compotes/farines/pâtes)"]},
+  {id:124,name:"Shampoing",status:"En stock",tags:["19 (hygiène)"]},
+  {id:125,name:"Sirop d'érable",status:"En stock",tags:["8 (céréales/confiture)"]},
+  {id:126,name:"Sopalin",status:"À restocker",tags:["10 (poubelles/PQ/Sopalin)"]},
+  {id:127,name:"Steak",status:"En stock",tags:["14 (surgelés)","3 (viande-oeufs)"]},
+  {id:128,name:"Sucre blanc",status:"En stock",tags:["4 (riz/sauces/compotes/farines/pâtes)"]},
+  {id:129,name:"Sucre brun/roux",status:"En stock",tags:["4 (riz/sauces/compotes/farines/pâtes)"]},
+  {id:130,name:"Tahin",status:"En stock",tags:["1 (bio)"]},
+  {id:131,name:"Thym",status:"En stock",tags:["2 (condiments/conserves)"]},
+  {id:132,name:"Tofu",status:"En stock",tags:["1 (bio)"]},
+  {id:133,name:"Vin blanc cheap",status:"En stock",tags:["18 (alcool)"]},
+  {id:134,name:"Vinaigre balsamique",status:"En stock",tags:["2 (condiments/conserves)"]},
+  {id:135,name:"Vinaigre blanc",status:"En stock",tags:["2 (condiments/conserves)"]},
+  {id:136,name:"Vinaigre de cidre",status:"En stock",tags:["2 (condiments/conserves)"]},
+  {id:137,name:"Vinaigre de riz",status:"En stock",tags:["2 (condiments/conserves)"]},
+  {id:138,name:"Yaourt à boire",status:"En stock",tags:["11 (Yaourt/fromage)"]},
+  {id:139,name:"Yaourt végé",status:"En stock",tags:["11 (Yaourt/fromage)"]},
+];
+
+const PALETTE = ["#e8f4fd","#fef3e2","#f0faf0","#fce8f3","#f3e8fe","#e8fef8","#fef8e8","#e8effe","#fee8e8","#e8feee","#feeee8","#eee8fe","#e8fefc","#feece8","#ecfee8","#fee8ec","#f8e8fe","#e8f8fe","#fee8f8","#f8fee8"];
+const colorCache = {};
+let colorIdx = 0;
+function tagColor(tag) {
+  if (!colorCache[tag]) colorCache[tag] = PALETTE[(colorIdx++) % PALETTE.length];
+  return colorCache[tag];
+}
+
+function tagNum(tag) { const m = tag.match(/^(\d+)/); return m ? parseInt(m[1]) : 999; }
+
+function load() {
+  try {
+    const d = localStorage.getItem(STORAGE_KEY);
+    const o = localStorage.getItem(ORDER_KEY);
+    return {
+      items: d ? JSON.parse(d) : INITIAL,
+      tagOrder: o ? JSON.parse(o) : [...new Set(INITIAL.flatMap(i=>i.tags||[]))].sort((a,b)=>tagNum(a)-tagNum(b))
+    };
+  } catch { return { items: INITIAL, tagOrder: [] }; }
+}
+
+function saveItems(items) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch {} }
+function saveOrder(order) { try { localStorage.setItem(ORDER_KEY, JSON.stringify(order)); } catch {} }
+
+let state = load();
+// seed tag colors in order
+[...new Set(state.items.flatMap(i=>i.tags||[]))].sort((a,b)=>tagNum(a)-tagNum(b)).forEach(t=>tagColor(t));
+
+let currentTab = "pantry";
+let search = "";
+let filterTag = "Tous";
+let filterStatus = "Tous";
+let editingId = null;
+let showAdd = false;
+let dragging = null;
+let dragOverTag = null;
+
+function isRestock(s) { return s !== "En stock"; }
+
+function statusClass(s) {
+  if (s === "En stock") return "pill-en-stock";
+  if (s === "Out of stock") return "pill-out";
+  return "pill-a-restocker";
+}
+
+function nextStatus(s) {
+  return s === "En stock" ? "À restocker" : "En stock";
+}
+
+function allTags() {
+  return [...new Set(state.items.flatMap(i=>i.tags||[]))].sort((a,b)=>tagNum(a)-tagNum(b));
+}
+
+function filteredItems() {
+  return state.items.filter(i => {
+    const ms = i.name.toLowerCase().includes(search.toLowerCase());
+    const mt = filterTag === "Tous" || (i.tags||[]).includes(filterTag);
+    const mst = filterStatus === "Tous" || i.status === filterStatus;
+    return ms && mt && mst;
+  }).sort((a,b) => a.name.localeCompare(b.name, "fr"));
+}
+
+function listeItems() { return state.items.filter(i => isRestock(i.status)); }
+
+function sortedListeTags() {
+  const li = listeItems();
+  const inList = [...new Set(li.flatMap(i=>i.tags||[]))];
+  const hasUntagged = li.some(i=>!i.tags||i.tags.length===0);
+  const ord = state.tagOrder.filter(t=>inList.includes(t));
+  const rest = inList.filter(t=>!ord.includes(t));
+  return [...ord, ...rest, ...(hasUntagged ? ["(sans rayon)"] : [])];
+}
+
+function render() {
+  document.getElementById("app").innerHTML = buildApp();
+  bindEvents();
+}
+
+function buildApp() {
+  const lc = listeItems().length;
+  return `
+    <div class="tabs">
+      <button class="tab ${currentTab==="pantry"?"active":""}" data-tab="pantry">📦 Pantry</button>
+      <button class="tab ${currentTab==="liste"?"active":""}" data-tab="liste">
+        🛒 Liste ${lc > 0 ? `<span class="badge">${lc}</span>` : ""}
+      </button>
+    </div>
+    ${currentTab === "pantry" ? buildPantry() : buildListe()}
+  `;
+}
+
+function buildPantry() {
+  const items = filteredItems();
+  const tags = allTags();
+  return `
+    <div class="toolbar">
+      <input type="text" placeholder="Rechercher…" value="${esc(search)}" id="search-input"/>
+      <select id="filter-tag">
+        <option ${filterTag==="Tous"?"selected":""}>Tous</option>
+        ${tags.map(t=>`<option ${filterTag===t?"selected":""}>${esc(t)}</option>`).join("")}
+      </select>
+      <select id="filter-status">
+        <option ${filterStatus==="Tous"?"selected":""}>Tous</option>
+        <option ${filterStatus==="En stock"?"selected":""}>En stock</option>
+        <option ${filterStatus==="À restocker"?"selected":""}>À restocker</option>
+        <option ${filterStatus==="Out of stock"?"selected":""}>Out of stock</option>
+      </select>
+      <button class="btn-add" id="btn-show-add">＋ Ajouter</button>
+    </div>
+    ${showAdd ? buildAddForm() : ""}
+    <div class="table">
+      <div class="table-header">
+        <div class="col-label">Nom</div>
+        <div class="col-label">Statut</div>
+      </div>
+      ${items.length === 0
+        ? `<div class="empty">Aucun article trouvé</div>`
+        : items.map(i => buildRow(i)).join("")}
+    </div>
+    <div class="count">${items.length} article${items.length!==1?"s":""}</div>
+  `;
+}
+
+function buildAddForm() {
+  return `
+    <div class="add-form">
+      <input id="new-name" placeholder="Nom de l'article" type="text"/>
+      <input id="new-tags" placeholder='Rayons ex: "1 (bio), 4 (riz)"' type="text"/>
+      <div class="add-form-row">
+        <select id="new-status">
+          <option>En stock</option>
+          <option>À restocker</option>
+        </select>
+        <button id="btn-confirm-add">✓ OK</button>
+        <button id="btn-cancel-add">✕</button>
+      </div>
+    </div>
+  `;
+}
+
+function buildRow(item) {
+  if (editingId === item.id) {
+    return `
+      <div class="table-row" data-id="${item.id}">
+        <div class="edit-form">
+          <input class="edit-name" value="${esc(item.name)}" placeholder="Nom"/>
+          <input class="edit-tags" value="${esc((item.tags||[]).join(", "))}" placeholder='Rayons séparés par virgule'/>
+          <div class="edit-form-actions">
+            <select class="edit-status">
+              <option ${item.status==="En stock"?"selected":""}>En stock</option>
+              <option ${item.status==="À restocker"?"selected":""}>À restocker</option>
+              <option ${item.status==="Out of stock"?"selected":""}>Out of stock</option>
+            </select>
+            <button class="btn-confirm-edit" data-id="${item.id}">✓ OK</button>
+            <button class="btn-cancel-edit">✕</button>
+          </div>
+        </div>
+      </div>`;
+  }
+  return `
+    <div class="table-row" data-id="${item.id}">
+      <div class="row-name">${esc(item.name)}</div>
+      <div class="row-actions">
+        <button class="pill-status ${statusClass(item.status)} btn-toggle" data-id="${item.id}">
+          <span class="dot"></span>${esc(item.status)}
+        </button>
+        <button class="btn-edit" data-id="${item.id}" title="Modifier">✏️</button>
+        <button class="btn-delete" data-id="${item.id}" title="Supprimer">🗑</button>
+      </div>
+    </div>`;
+}
+
+function buildListe() {
+  const li = listeItems();
+  if (li.length === 0) return `<div class="empty">✅ Tout est en stock !</div>`;
+  const tags = sortedListeTags();
+  return `
+    <div class="liste-header">
+      <span><strong>${li.length}</strong> article${li.length!==1?"s":""} à restocker</span>
+    </div>
+    ${tags.map(tag => {
+      const tagItems = tag === "(sans rayon)"
+        ? li.filter(i=>!i.tags||i.tags.length===0).sort((a,b)=>a.name.localeCompare(b.name,"fr"))
+        : li.filter(i=>(i.tags||[]).includes(tag)).sort((a,b)=>a.name.localeCompare(b.name,"fr"));
+      if (!tagItems.length) return "";
+      const bg = tag === "(sans rayon)" ? "#f7f7f7" : tagColor(tag);
+      return `
+        <div class="liste-group" draggable="true" data-tag="${esc(tag)}">
+          <div class="liste-group-header">
+            <div class="liste-group-header-left">
+              <span class="grip">⠿</span>
+              <span class="tag-pill" style="background:${bg}">${esc(tag)}</span>
+              <span class="liste-group-count">${tagItems.length}</span>
+            </div>
+            <button class="btn-checkall" data-tag="${esc(tag)}">✓ Tout cocher</button>
+          </div>
+          ${tagItems.map(item => `
+            <div class="liste-item btn-toggle" data-id="${item.id}">
+              <div class="checkbox"></div>
+              <span class="liste-item-name">${esc(item.name)}</span>
+            </div>
+          `).join("")}
+        </div>`;
+    }).join("")}
+  `;
+}
+
+function esc(s) {
+  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function bindEvents() {
+  const app = document.getElementById("app");
+
+  app.querySelectorAll("[data-tab]").forEach(btn => {
+    btn.addEventListener("click", () => { currentTab = btn.dataset.tab; render(); });
+  });
+
+  const si = app.querySelector("#search-input");
+  if (si) si.addEventListener("input", e => { search = e.target.value; render(); });
+
+  const ft = app.querySelector("#filter-tag");
+  if (ft) ft.addEventListener("change", e => { filterTag = e.target.value; render(); });
+
+  const fs = app.querySelector("#filter-status");
+  if (fs) fs.addEventListener("change", e => { filterStatus = e.target.value; render(); });
+
+  const bsa = app.querySelector("#btn-show-add");
+  if (bsa) bsa.addEventListener("click", () => { showAdd = !showAdd; render(); });
+
+  const bca = app.querySelector("#btn-confirm-add");
+  if (bca) bca.addEventListener("click", () => {
+    const name = app.querySelector("#new-name").value.trim();
+    if (!name) return;
+    const tags = app.querySelector("#new-tags").value.split(",").map(t=>t.trim()).filter(Boolean);
+    const status = app.querySelector("#new-status").value;
+    const id = Date.now();
+    state.items.push({id, name, status, tags});
+    saveItems(state.items);
+    const miss = tags.filter(t=>!state.tagOrder.includes(t));
+    if (miss.length) { state.tagOrder = [...state.tagOrder, ...miss].sort((a,b)=>tagNum(a)-tagNum(b)); saveOrder(state.tagOrder); }
+    showAdd = false;
+    render();
+  });
+
+  const bcna = app.querySelector("#btn-cancel-add");
+  if (bcna) bcna.addEventListener("click", () => { showAdd = false; render(); });
+
+  app.querySelectorAll(".btn-toggle").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      const id = parseInt(btn.dataset.id);
+      state.items = state.items.map(i => i.id===id ? {...i, status: nextStatus(i.status)} : i);
+      saveItems(state.items);
+      render();
+    });
+  });
+
+  app.querySelectorAll(".btn-edit").forEach(btn => {
+    btn.addEventListener("click", () => { editingId = parseInt(btn.dataset.id); render(); });
+  });
+
+  app.querySelectorAll(".btn-delete").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (!confirm("Supprimer cet article ?")) return;
+      state.items = state.items.filter(i => i.id !== parseInt(btn.dataset.id));
+      saveItems(state.items);
+      render();
+    });
+  });
+
+  app.querySelectorAll(".btn-confirm-edit").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const row = btn.closest(".table-row");
+      const name = row.querySelector(".edit-name").value.trim();
+      const tags = row.querySelector(".edit-tags").value.split(",").map(t=>t.trim()).filter(Boolean);
+      const status = row.querySelector(".edit-status").value;
+      const id = parseInt(btn.dataset.id);
+      state.items = state.items.map(i => i.id===id ? {...i, name, tags, status} : i);
+      saveItems(state.items);
+      const miss = tags.filter(t=>!state.tagOrder.includes(t));
+      if (miss.length) { state.tagOrder = [...state.tagOrder,...miss].sort((a,b)=>tagNum(a)-tagNum(b)); saveOrder(state.tagOrder); }
+      editingId = null;
+      render();
+    });
+  });
+
+  app.querySelectorAll(".btn-cancel-edit").forEach(btn => {
+    btn.addEventListener("click", () => { editingId = null; render(); });
+  });
+
+  app.querySelectorAll(".btn-checkall").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      const tag = btn.dataset.tag;
+      state.items = state.items.map(i =>
+        (tag === "(sans rayon)" ? (!i.tags||i.tags.length===0) : (i.tags||[]).includes(tag)) && isRestock(i.status)
+          ? {...i, status:"En stock"} : i);
+      saveItems(state.items);
+      render();
+    });
+  });
+
+  // drag & drop pour réordonner les rayons en vue liste
+  app.querySelectorAll(".liste-group[draggable]").forEach(el => {
+    el.addEventListener("dragstart", () => { dragging = el.dataset.tag; el.style.opacity = "0.5"; });
+    el.addEventListener("dragend", () => { dragging = null; el.style.opacity = "1"; saveOrder(state.tagOrder); render(); });
+    el.addEventListener("dragover", e => {
+      e.preventDefault();
+      if (!dragging || dragging === el.dataset.tag) return;
+      const o = [...state.tagOrder];
+      const from = o.indexOf(dragging), to = o.indexOf(el.dataset.tag);
+      if (from === -1) return;
+      o.splice(from, 1);
+      to === -1 ? o.push(dragging) : o.splice(to, 0, dragging);
+      state.tagOrder = o;
+    });
+  });
+}
+
+render();
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+</script>
+</body>
+</html>
