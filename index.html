@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <meta name="theme-color" content="#f1f5f9"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
@@ -11,26 +11,31 @@
   <link rel="apple-touch-icon" href="icon-192.png"/>
   <title>Liste de courses</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; background: #f1f5f9; color: #0f172a; font-size: 15px; -webkit-font-smoothing: antialiased; }
-    input, select, button { font-family: inherit; font-size: 14px; }
-    input, select { border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 12px; background: #fff; color: #0f172a; outline: none; width: 100%; transition: border-color 0.15s, box-shadow 0.15s; }
-    input:focus, select:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
-    button { background: transparent; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 14px; cursor: pointer; color: #374151; font-weight: 500; transition: background 0.15s, border-color 0.15s; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    html, body { overflow-x: hidden; max-width: 100%; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; background: #f1f5f9; color: #0f172a; font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    input, select, button { font-family: inherit; font-size: 16px; }
+    @media (min-width: 768px) { input, select { font-size: 14px; } }
+    input, select { border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 12px; background: #fff; color: #0f172a; width: 100%; transition: border-color 0.15s, box-shadow 0.15s; }
+    input:focus-visible, select:focus-visible { border-color: #6366f1; outline: 2px solid #6366f1; outline-offset: -1px; }
+    input:focus:not(:focus-visible), select:focus:not(:focus-visible) { outline: none; }
+    button { background: transparent; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 14px; cursor: pointer; color: #374151; font-weight: 500; touch-action: manipulation; transition: background 0.15s, border-color 0.15s; }
     button:hover { background: #f8fafc; border-color: #cbd5e1; }
     button:active { opacity: 0.8; }
+    button:focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; }
 
-    #app { max-width: 680px; margin: 0 auto; padding: 1.5rem 1rem 2rem; }
+    #app { max-width: 680px; margin: 0 auto; padding: 1.5rem 1rem 2rem; padding-bottom: calc(2rem + env(safe-area-inset-bottom)); padding-left: max(1rem, env(safe-area-inset-left)); padding-right: max(1rem, env(safe-area-inset-right)); }
 
     .app-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; padding-bottom: 1.25rem; border-bottom: 1px solid #e2e8f0; }
     .app-icon { font-size: 22px; line-height: 1; }
     .app-title { font-size: 18px; font-weight: 700; color: #0f172a; letter-spacing: -0.02em; }
 
     .tabs { display: flex; gap: 4px; margin-bottom: 1.5rem; background: #e2e8f0; border-radius: 10px; padding: 4px; }
-    .tab { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 16px; border-radius: 7px; border: none; background: transparent; color: #64748b; font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.15s, color 0.15s, box-shadow 0.15s; }
+    .tab { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 16px; min-height: 44px; border-radius: 7px; border: none; background: transparent; color: #475569; font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.15s, color 0.15s, box-shadow 0.15s; }
     .tab:hover { background: rgba(255,255,255,0.55); color: #374151; }
     .tab.active { background: #fff; color: #0f172a; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06); }
-    .badge { background: #ef4444; color: #fff; border-radius: 99px; font-size: 10px; padding: 1px 6px; font-weight: 600; line-height: 1.5; }
+    .badge { background: #dc2626; color: #fff; border-radius: 99px; font-size: 10px; padding: 1px 6px; font-weight: 600; line-height: 1.5; }
 
     .toolbar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
     .toolbar input { flex: 1; min-width: 150px; }
@@ -44,12 +49,12 @@
 
     .table { border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04); }
     .table-header { display: flex; padding: 8px 14px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
-    .col-label { flex: 1; font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 4px; }
+    .col-label { flex: 1; font-size: 11px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 4px; }
 
     /* Ligne normale avec swipe */
     .row-wrapper { position: relative; overflow: hidden; border-bottom: 1px solid #f1f5f9; background: #fff; }
     .row-wrapper:last-child { border-bottom: none; }
-    .row-inner { display: flex; align-items: center; padding: 10px 14px; gap: 10px; min-height: 46px; background: #fff; position: relative; transition: transform 0.22s ease; will-change: transform; touch-action: pan-y; user-select: none; }
+    .row-inner { display: flex; align-items: center; padding: 4px 14px; gap: 10px; min-height: 44px; background: #fff; position: relative; transition: transform 0.22s ease; touch-action: pan-y; user-select: none; }
     .row-inner:hover { background: #fafbfc; }
     .row-actions-reveal { position: absolute; right: 0; top: 0; bottom: 0; display: flex; align-items: stretch; }
     .btn-edit-reveal { background: #eef2ff; color: #4f46e5; border: none; padding: 0 18px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; width: 70px; transition: background 0.15s; }
@@ -71,7 +76,7 @@
     .modal-title { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 6px; }
     .modal-body { font-size: 13px; color: #64748b; margin-bottom: 20px; line-height: 1.5; }
     .modal-actions { display: flex; gap: 8px; }
-    .modal-actions button { flex: 1; padding: 10px; font-size: 14px; font-weight: 600; border-radius: 10px; }
+    .modal-actions button { flex: 1; padding: 10px; min-height: 44px; font-size: 14px; font-weight: 600; border-radius: 10px; }
     .btn-modal-cancel { background: #f1f5f9; border-color: #e2e8f0; color: #374151; }
     .btn-modal-cancel:hover { background: #e2e8f0; }
     .btn-modal-danger { background: #ef4444; border-color: #ef4444; color: #fff; }
@@ -80,11 +85,10 @@
     @keyframes mSlide { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
     .edit-form { display: flex; flex-direction: column; gap: 6px; width: 100%; }
-    .edit-form input, .edit-form select { font-size: 13px; }
     .edit-form-actions { display: flex; gap: 6px; }
-    .edit-form-actions button { width: auto; font-size: 13px; padding: 5px 10px; }
+    .edit-form-actions button { width: auto; font-size: 13px; padding: 5px 10px; min-height: 44px; }
 
-    .pill-status { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 99px; font-size: 12px; font-weight: 500; border: none; cursor: pointer; white-space: nowrap; transition: filter 0.15s; }
+    .pill-status { display: inline-flex; align-items: center; gap: 5px; padding: 11px 12px; min-height: 44px; border-radius: 99px; font-size: 12px; font-weight: 500; border: none; cursor: pointer; white-space: nowrap; transition: filter 0.15s; }
     .pill-status:hover { filter: brightness(0.95); }
     .pill-status .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
     .pill-en-stock { background: #dcfce7; color: #15803d; }
@@ -96,19 +100,19 @@
 
     .tag-pill { display: inline-block; font-size: 11px; padding: 3px 9px; border-radius: 6px; color: #374151; white-space: nowrap; font-weight: 500; }
 
-    .empty { text-align: center; padding: 3rem; color: #94a3b8; font-size: 14px; }
-    .count { font-size: 12px; color: #94a3b8; margin-top: 8px; padding-left: 2px; }
+    .empty { text-align: center; padding: 3rem; color: #475569; font-size: 14px; }
+    .count { font-size: 12px; color: #475569; margin-top: 8px; padding-left: 2px; }
 
-    .liste-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; font-size: 13px; color: #64748b; }
+    .liste-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; font-size: 13px; color: #475569; }
     .liste-header strong { color: #0f172a; font-weight: 600; }
     .liste-group { border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-bottom: 10px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: box-shadow 0.15s; }
     .liste-group:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
     .liste-group-header { display: flex; align-items: center; justify-content: space-between; padding: 9px 14px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; cursor: grab; }
     .liste-group-header-left { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-    .liste-group-count { font-size: 12px; color: #94a3b8; font-weight: 500; }
-    .btn-checkall { font-size: 11px; width: auto; display: flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; color: #6366f1; border-color: #c7d2fe; background: #eef2ff; font-weight: 500; }
+    .liste-group-count { font-size: 12px; color: #475569; font-weight: 500; }
+    .btn-checkall { font-size: 11px; width: auto; display: flex; align-items: center; gap: 4px; padding: 4px 10px; min-height: 44px; border-radius: 6px; color: #6366f1; border-color: #c7d2fe; background: #eef2ff; font-weight: 500; }
     .btn-checkall:hover { background: #e0e7ff; border-color: #a5b4fc; color: #4f46e5; }
-    .liste-item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: background 0.1s; }
+    .liste-item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; width: 100%; text-align: left; border: none; border-bottom: 1px solid #f1f5f9; border-radius: 0; background: transparent; font-family: inherit; font-weight: 400; color: inherit; cursor: pointer; transition: background 0.1s; }
     .liste-item:last-child { border-bottom: none; }
     .liste-item:hover { background: #f8fafc; }
     .liste-item:active { background: #f1f5f9; }
@@ -120,16 +124,24 @@
 
     /* Tag selector */
     .tag-selector { display: flex; flex-direction: column; gap: 6px; }
-    .tag-selector-label { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; }
+    .tag-selector-label { font-size: 11px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.06em; }
     .tag-chips { display: flex; flex-wrap: wrap; gap: 5px; }
-    .tag-chip-label { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 6px; background: #f1f5f9; border: 1px solid #e2e8f0; cursor: pointer; font-size: 12px; font-weight: 500; color: #374151; transition: background 0.12s, border-color 0.12s; user-select: none; }
+    .tag-chip-label { display: inline-flex; align-items: center; padding: 4px 10px; min-height: 44px; border-radius: 6px; background: #f1f5f9; border: 1px solid #e2e8f0; cursor: pointer; font-size: 12px; font-weight: 500; color: #374151; transition: background 0.12s, border-color 0.12s; user-select: none; }
     .tag-chip-label:hover { background: #e0e7ff; border-color: #a5b4fc; color: #4338ca; }
     .tag-chip-label:has(input:checked) { background: #eef2ff; border-color: #6366f1; color: #4338ca; font-weight: 600; }
     .tag-chip-label input[type=checkbox] { display: none; }
     .tag-new-row { display: flex; gap: 6px; align-items: center; margin-top: 2px; }
-    .tag-new-row .tag-new-input { flex: 1; font-size: 12px; }
-    .btn-tag-add { width: auto; white-space: nowrap; font-size: 12px; padding: 5px 10px; color: #6366f1; border-color: #c7d2fe; background: #eef2ff; }
+    .tag-new-row .tag-new-input { flex: 1; }
+    .btn-tag-add { width: auto; white-space: nowrap; font-size: 12px; padding: 5px 10px; min-height: 44px; color: #6366f1; border-color: #c7d2fe; background: #eef2ff; }
     .btn-tag-add:hover { background: #e0e7ff; border-color: #a5b4fc; color: #4f46e5; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -453,8 +465,8 @@ function buildAddForm() {
           <option>En stock</option>
           <option>À restocker</option>
         </select>
-        <button id="btn-confirm-add">✓ OK</button>
-        <button id="btn-cancel-add">✕</button>
+        <button id="btn-confirm-add" aria-label="Valider">✓ OK</button>
+        <button id="btn-cancel-add" aria-label="Annuler">✕</button>
       </div>
     </div>
   `;
@@ -473,8 +485,8 @@ function buildRow(item) {
               <option ${item.status==="À restocker"?"selected":""}>À restocker</option>
               <option ${item.status==="Out of stock"?"selected":""}>Out of stock</option>
             </select>
-            <button class="btn-confirm-edit" data-id="${item.id}">✓ OK</button>
-            <button class="btn-cancel-edit">✕</button>
+            <button class="btn-confirm-edit" data-id="${item.id}" aria-label="Valider">✓ OK</button>
+            <button class="btn-cancel-edit" aria-label="Annuler">✕</button>
           </div>
         </div>
       </div>`;
@@ -482,11 +494,11 @@ function buildRow(item) {
   return `
     <div class="row-wrapper" data-id="${item.id}">
       <div class="row-actions-reveal">
-        <button class="btn-edit-reveal" data-id="${item.id}" title="Modifier">
-          <span>✏️</span>Modifier
+        <button class="btn-edit-reveal" data-id="${item.id}" aria-label="Modifier">
+          <span aria-hidden="true">✏️</span>Modifier
         </button>
-        <button class="btn-delete-reveal" data-id="${item.id}" title="Supprimer">
-          <span>🗑</span>Supprimer
+        <button class="btn-delete-reveal" data-id="${item.id}" aria-label="Supprimer">
+          <span aria-hidden="true">🗑</span>Supprimer
         </button>
       </div>
       <div class="row-inner" data-id="${item.id}">
@@ -523,10 +535,10 @@ function buildListe() {
             <button class="btn-checkall" data-tag="${esc(tag)}">✓ Tout cocher</button>
           </div>
           ${tagItems.map(item => `
-            <div class="liste-item btn-toggle" data-id="${item.id}">
-              <div class="checkbox"></div>
+            <button class="liste-item btn-toggle" type="button" data-id="${item.id}">
+              <div class="checkbox" aria-hidden="true"></div>
               <span class="liste-item-name">${esc(item.name)}</span>
-            </div>
+            </button>
           `).join("")}
         </div>`;
     }).join("")}
@@ -551,6 +563,7 @@ function bindSwipe(wrapper) {
     inner.style.transition = 'transform 0.22s ease';
     inner.style.transform = open ? `translateX(-${REVEAL}px)` : 'translateX(0)';
     wrapper.dataset.swiped = open ? '1' : '';
+    inner.addEventListener('transitionend', () => { inner.style.willChange = ''; }, { once: true });
   }
 
   inner.addEventListener('pointerdown', e => {
@@ -570,6 +583,7 @@ function bindSwipe(wrapper) {
       isHoriz = Math.abs(dx) > Math.abs(dy);
       if (isHoriz) {
         inner.setPointerCapture(e.pointerId);
+        inner.style.willChange = 'transform';
       } else {
         tracking = false;
         return;
