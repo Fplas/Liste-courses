@@ -558,7 +558,8 @@ function bindSwipe(wrapper) {
     startX = e.clientX; startY = e.clientY;
     tracking = true; isHoriz = null;
     currentX = isOpen() ? -REVEAL : 0;
-    inner.setPointerCapture(e.pointerId);
+    // Ne pas capturer ici — attendre la confirmation de direction horizontale
+    // pour ne pas bloquer le scroll vertical iOS
   });
 
   inner.addEventListener('pointermove', e => {
@@ -567,6 +568,12 @@ function bindSwipe(wrapper) {
     const dy = e.clientY - startY;
     if (isHoriz === null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
       isHoriz = Math.abs(dx) > Math.abs(dy);
+      if (isHoriz) {
+        inner.setPointerCapture(e.pointerId);
+      } else {
+        tracking = false;
+        return;
+      }
     }
     if (!isHoriz) return;
     const base = isOpen() ? -REVEAL : 0;
@@ -578,14 +585,24 @@ function bindSwipe(wrapper) {
 
   inner.addEventListener('pointerup', e => {
     if (!tracking || isHoriz === null) { tracking = false; return; }
-    tracking = false;
-    if (!isHoriz) return;
+    const wasHoriz = isHoriz;
+    const wasOpen = isOpen();
     const dx = e.clientX - startX;
-    snapTo(isOpen() ? currentX > -REVEAL + THRESHOLD : dx < -THRESHOLD);
+    tracking = false; isHoriz = null;
+    if (!wasHoriz) return;
+    // Quand fermé : ouvrir si swipé assez à gauche
+    // Quand ouvert : garder ouvert si pas encore assez swipé à droite (< threshold)
+    snapTo(wasOpen ? currentX < -REVEAL + THRESHOLD : dx < -THRESHOLD);
+  });
+
+  inner.addEventListener('pointercancel', e => {
+    if (!tracking) return;
+    const wasOpen = isOpen();
+    tracking = false; isHoriz = null;
+    snapTo(wasOpen);
   });
 
   inner.addEventListener('click', e => {
-    // Si le row était ouvert, fermer et bloquer le clic
     if (isOpen()) { snapTo(false); e.stopPropagation(); e.preventDefault(); return; }
   });
 }
